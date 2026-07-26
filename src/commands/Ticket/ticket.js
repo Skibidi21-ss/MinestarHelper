@@ -10,6 +10,11 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   MessageFlags,
+  ContainerBuilder,
+TextDisplayBuilder,
+SeparatorBuilder,
+SeparatorSpacingSize,
+MediaGalleryBuilder,
 } from 'discord.js';
 import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
 import { getGuildConfig, setGuildConfig } from '../../services/config/guildConfig.js';
@@ -147,17 +152,6 @@ const panelMessage = interaction.options.getString("panel_message") || "Click th
             const maxTicketsPerUser = interaction.options.getInteger("max_tickets_per_user") || 3;
 const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 
-const setupEmbed = createEmbed({
-  title: "Centrum Pomocy",
-  description:
-    "🛒 **Chcesz zamówić u nas usługę lub potrzebujesz pomocy od administracji? Bądź potrzebujesz coś całkiem innego? Podbijaj Ticket!**\n\n" +
-    "➡️ **Wybierz kategorię z listy poniżej, a my się tym zajmiemy!**",
-  color: "#8b5cf6",
-  image: "https://raw.githubusercontent.com/Skibidi21-ss/MinestarHelper/main/baner.png",
-  footer: {
-    text: "MinestarHelper • Panel Ticketów",
-  },
-});
 
 const ticketMenu = new ActionRowBuilder().addComponents(
   new StringSelectMenuBuilder()
@@ -184,12 +178,68 @@ const ticketMenu = new ActionRowBuilder().addComponents(
     )
 );
 
+const panelContainer = new ContainerBuilder()
+  .setAccentColor(0x8b5cf6)
+
+  .addTextDisplayComponents(
+    new TextDisplayBuilder()
+      .setContent("# Centrum Pomocy")
+  )
+
+  .addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small)
+  )
+
+  .addTextDisplayComponents(
+    new TextDisplayBuilder()
+      .setContent(
+        "🛒 **Chcesz zamówić u nas usługę lub potrzebujesz pomocy od administracji? Bądź potrzebujesz coś całkiem innego? Podbijaj Ticket!**"
+      )
+  )
+
+  .addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small)
+  )
+
+  .addTextDisplayComponents(
+    new TextDisplayBuilder()
+      .setContent(
+        "➡️ **Wybierz kategorię z listy poniżej, a my się tym zajmiemy!**"
+      )
+  )
+
+  .addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small)
+  )
+
+  .addMediaGalleryComponents(
+    new MediaGalleryBuilder().addItems({
+      media: {
+        url: "https://raw.githubusercontent.com/Skibidi21-ss/MinestarHelper/main/baner.png",
+      },
+      description: "Baner MinestarHelper",
+    })
+  )
+
+  .addSeparatorComponents(
+    new SeparatorBuilder()
+      .setDivider(true)
+      .setSpacing(SeparatorSpacingSize.Small)
+  )
+
+  .addActionRowComponents(ticketMenu);
+          
             try {
                 const sentPanel = await panelChannel.send({
-  embeds: [setupEmbed],
-  components: [ticketMenu],
+  flags: MessageFlags.IsComponentsV2,
+  components: [panelContainer],
 });
-
                 if (client.db && interaction.guildId) {
                     const currentConfig = existingConfig;
                     currentConfig.ticketCategoryId = categoryChannel ? categoryChannel.id : null;
