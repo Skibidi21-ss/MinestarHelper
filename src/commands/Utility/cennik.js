@@ -1,6 +1,5 @@
 import {
   SlashCommandBuilder,
-  PermissionFlagsBits,
 } from 'discord.js';
 
 import { createEmbed } from '../../utils/embeds.js';
@@ -10,9 +9,6 @@ export default {
     .setName('cennik')
     .setDescription('Wysyła cennik MinestarHelper')
     .setDMPermission(false)
-    .setDefaultMemberPermissions(
-      PermissionFlagsBits.ManageMessages
-    ),
 
   category: 'Utility',
 
