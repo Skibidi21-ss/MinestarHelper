@@ -8,7 +8,7 @@ export default {
   data: new SlashCommandBuilder()
     .setName('cennik')
     .setDescription('Wysyła cennik MinestarHelper')
-    .setDMPermission(false)
+    .setDMPermission(false),
 
   category: 'Utility',
 
