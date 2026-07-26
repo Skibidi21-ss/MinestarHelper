@@ -1,4 +1,13 @@
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, AttachmentBuilder, MessageFlags } from 'discord.js';
+import {
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+  AttachmentBuilder,
+  MessageFlags,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+} from 'discord.js';
 import { createEmbed, successEmbed } from '../utils/embeds.js';
 import { createTicket, closeTicket, claimTicket, updateTicketPriority } from '../services/ticket.js';
 import { getGuildConfig } from '../services/config/guildConfig.js';
@@ -104,50 +113,70 @@ async function ensureTicketPermission(interaction, client, actionLabel, options 
 
 const createTicketHandler = {
   name: 'create_ticket',
+
   async execute(interaction, client) {
     try {
       if (!(await ensureGuildContext(interaction))) return;
 
-      const rateLimitKey = `${interaction.user.id}:create_ticket`;
-      const allowed = await checkRateLimit(rateLimitKey, 3, 60000);
-      if (!allowed) {
-        await replyUserError(interaction, { type: ErrorTypes.RATE_LIMIT, message: 'You are creating tickets too quickly. Please wait a minute and try again.' });
-        return;
-      }
-
       const config = await getGuildConfig(client, interaction.guildId);
       const maxTicketsPerUser = config.maxTicketsPerUser || 3;
-      
+
       const { getUserTicketCount } = await import('../services/ticket.js');
-      const currentTicketCount = await getUserTicketCount(interaction.guildId, interaction.user.id);
-      
+      const currentTicketCount = await getUserTicketCount(
+        interaction.guildId,
+        interaction.user.id
+      );
+
       if (currentTicketCount >= maxTicketsPerUser) {
-        return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `You have reached the maximum number of open tickets (${maxTicketsPerUser}).\n\nPlease close your existing tickets before creating a new one.\n\n**Current Tickets:** ${currentTicketCount}/${maxTicketsPerUser}` });
+        return await replyUserError(interaction, {
+          type: ErrorTypes.UNKNOWN,
+          message:
+            `Masz już maksymalną liczbę otwartych ticketów (${maxTicketsPerUser}).\n\n` +
+            `Aktualnie: ${currentTicketCount}/${maxTicketsPerUser}`,
+        });
       }
-      
-      const modal = new ModalBuilder()
-        .setCustomId('create_ticket_modal')
-        .setTitle('Create a Ticket');
 
-      const reasonInput = new TextInputBuilder()
-        .setCustomId('reason')
-        .setLabel('Why are you creating this ticket?')
-        .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder('Describe your issue...')
-        .setRequired(true)
-        .setMaxLength(1000);
+      const categoryMenu = new StringSelectMenuBuilder()
+        .setCustomId('ticket_category')
+        .setPlaceholder('Wybierz kategorię ticketu')
+        .addOptions(
+          new StringSelectMenuOptionBuilder()
+            .setLabel('Kupno moda')
+            .setDescription('Zakup moda i pytania dotyczące płatności')
+            .setEmoji('🛒')
+            .setValue('kupno'),
 
-      const actionRow = new ActionRowBuilder().addComponents(reasonInput);
-      modal.addComponents(actionRow);
+          new StringSelectMenuOptionBuilder()
+            .setLabel('Problem z modem')
+            .setDescription('Błędy, instalacja lub problem z działaniem')
+            .setEmoji('🛠️')
+            .setValue('problem'),
 
-      await interaction.showModal(modal);
+          new StringSelectMenuOptionBuilder()
+            .setLabel('Inne')
+            .setDescription('Pozostałe sprawy')
+            .setEmoji('❓')
+            .setValue('inne')
+        );
+
+      const row = new ActionRowBuilder().addComponents(categoryMenu);
+
+      await interaction.reply({
+        content: 'Wybierz kategorię swojego ticketu:',
+        components: [row],
+        flags: MessageFlags.Ephemeral,
+      });
     } catch (error) {
-      logger.error('Error creating ticket modal:', error);
+      logger.error('Error showing ticket category menu:', error);
+
       if (!interaction.replied && !interaction.deferred) {
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Could not open ticket creation form.' });
+        await replyUserError(interaction, {
+          type: ErrorTypes.UNKNOWN,
+          message: 'Nie udało się otworzyć wyboru kategorii.',
+        });
       }
     }
-  }
+  },
 };
 
 const createTicketModalHandler = {
@@ -158,7 +187,8 @@ const createTicketModalHandler = {
 
       const deferSuccess = await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
       if (!deferSuccess) return;
-      
+
+      const ticketType = interaction.customId.split(':')[1] || 'inne';
       const reason = interaction.fields.getTextInputValue('reason');
       const config = await getGuildConfig(client, interaction.guildId);
       const categoryId = config.ticketCategoryId || null;
@@ -168,6 +198,8 @@ const createTicketModalHandler = {
         interaction.member,
         categoryId,
         reason
+        'none',
+        ticketType
       );
       await interaction.editReply({
         embeds: [successEmbed(
