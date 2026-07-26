@@ -150,10 +150,13 @@ const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 const setupEmbed = createEmbed({
   title: "Centrum Pomocy",
   description:
-    "**Potrzebujesz pomocy z MinestarHelper lub chcesz kupić moda?**\n\n" +
-    "Wybierz odpowiednią kategorię z listy poniżej. Następnie opisz dokładnie swoją sprawę, a administracja odpowie w utworzonym tickecie.",
+    "🛒 **Chcesz zamówić u nas usługę lub potrzebujesz pomocy od administracji? Bądź potrzebujesz coś całkiem innego? Podbijaj Ticket!**\n\n" +
+    "➡️ **Wybierz kategorię z listy poniżej, a my się tym zajmiemy!**",
   color: "#8b5cf6",
   image: "https://raw.githubusercontent.com/Skibidi21-ss/MinestarHelper/main/baner.png",
+  footer: {
+    text: "MinestarHelper • Panel Ticketów",
+  },
 });
 
 const ticketMenu = new ActionRowBuilder().addComponents(
