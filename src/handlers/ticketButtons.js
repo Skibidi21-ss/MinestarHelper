@@ -197,7 +197,7 @@ const createTicketModalHandler = {
         interaction.guild,
         interaction.member,
         categoryId,
-        reason
+        reason,
         'none',
         ticketType
       );
