@@ -1,5 +1,16 @@
 import { getColor } from '../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  PermissionsBitField,
+  ChannelType,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  MessageFlags,
+} from 'discord.js';
 import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
 import { getGuildConfig, setGuildConfig } from '../../services/config/guildConfig.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -136,25 +147,45 @@ const panelMessage = interaction.options.getString("panel_message") || "Click th
             const maxTicketsPerUser = interaction.options.getInteger("max_tickets_per_user") || 3;
 const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 
-            const setupEmbed = createEmbed({ 
-                title: "Support Tickets", 
-description: panelMessage,
-                color: getColor('info')
-            });
+const setupEmbed = createEmbed({
+  title: "Centrum Pomocy",
+  description:
+    "**Potrzebujesz pomocy z MinestarHelper lub chcesz kupić moda?**\n\n" +
+    "Wybierz odpowiednią kategorię z listy poniżej. Następnie opisz dokładnie swoją sprawę, a administracja odpowie w utworzonym tickecie.",
+  color: "#8b5cf6",
+  image: "https://raw.githubusercontent.com/Skibidi21-ss/MinestarHelper/main/baner.png",
+});
 
-            const ticketButton = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId("create_ticket")
-.setLabel(buttonLabel)
-                    .setStyle(ButtonStyle.Primary)
-                    .setEmoji("📩"),
-            );
+const ticketMenu = new ActionRowBuilder().addComponents(
+  new StringSelectMenuBuilder()
+    .setCustomId("ticket_category")
+    .setPlaceholder("Wybierz kategorię ticketa")
+    .addOptions(
+      new StringSelectMenuOptionBuilder()
+        .setLabel("Kupno moda")
+        .setDescription("Zakup MinestarHelper i pytania dotyczące płatności")
+        .setEmoji("🛒")
+        .setValue("kupno"),
+
+      new StringSelectMenuOptionBuilder()
+        .setLabel("Problem z modem")
+        .setDescription("Instalacja, błędy lub problem z działaniem moda")
+        .setEmoji("🛠️")
+        .setValue("problem"),
+
+      new StringSelectMenuOptionBuilder()
+        .setLabel("Inne")
+        .setDescription("Wszystkie pozostałe sprawy")
+        .setEmoji("❓")
+        .setValue("inne")
+    )
+);
 
             try {
                 const sentPanel = await panelChannel.send({
-                    embeds: [setupEmbed],
-                    components: [ticketButton],
-                });
+  embeds: [setupEmbed],
+  components: [ticketMenu],
+});
 
                 if (client.db && interaction.guildId) {
                     const currentConfig = existingConfig;
