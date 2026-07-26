@@ -24,7 +24,7 @@ export default {
         '💙 **PayPal**',
         '⭐ **Waluta serwerowa i itemy (SkyPvP)**',
         '',
-        '**Cennik:**',
+        '**Cenna:**',
         '',
         '• **20zł**',
         '',
