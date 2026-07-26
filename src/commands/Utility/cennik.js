@@ -74,7 +74,7 @@ export default {
             '💬 **Ceny są do negocjacji.**',
             'Przy płatności itemami lub walutą Minestar SkyPvP wycena jest ustalana indywidualnie.',
             '',
-            '🛒 Aby dokonać zakupu, utwórz ticket w kategorii **Kupno moda**.',
+            '🛒 Aby dokonać zakupu, utwórz ticket..',
           ].join('\n')
         )
       );
