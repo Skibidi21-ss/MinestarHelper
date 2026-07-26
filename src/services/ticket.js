@@ -21,6 +21,29 @@ const TICKET_DELETE_DELAY_MS = 3000;
 const TICKET_DELETE_DELAY_SECONDS = Math.floor(TICKET_DELETE_DELAY_MS / 1000);
 const TICKET_SERVICE = 'ticketService';
 
+export const TICKET_TYPES = {
+  kupno: {
+    label: 'Kupno moda',
+    emoji: '🛒',
+    slug: 'kupno',
+  },
+  problem: {
+    label: 'Problem z modem',
+    emoji: '🛠️',
+    slug: 'problem',
+  },
+  inne: {
+    label: 'Inne',
+    emoji: '❓',
+    slug: 'inne',
+  },
+};
+
+function getTicketTypeInfo(ticketType) {
+  if (!ticketType) return null;
+  return TICKET_TYPES[ticketType] ?? null;
+}
+
 function ticketUserError(message, userMessage, type = ErrorTypes.VALIDATION, context = {}) {
   throw createError(message, type, userMessage, { service: TICKET_SERVICE, ...context });
 }
@@ -79,10 +102,18 @@ export const getUserTicketCount = wrapServiceBoundary(async function getUserTick
   context: {},
 });
 
-export async function createTicket(guild, member, categoryId, reason = 'No reason provided', priority = 'none') {
+export async function createTicket(
+  guild,
+  member,
+  categoryId,
+  reason = 'No reason provided',
+  priority = 'none',
+  ticketType = null
+) {
   try {
     const config = await getGuildConfig(guild.client, guild.id);
     const ticketConfig = config.tickets || {};
+    const ticketTypeInfo = getTicketTypeInfo(ticketType);
     
     const maxTicketsPerUser = config.maxTicketsPerUser ?? 3;
     const currentTicketCount = await getUserTicketCount(guild.id, member.id);
@@ -118,7 +149,9 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     
     const ticketNumber = await getNextTicketNumber(guild.id);
     
-    let channelName = `ticket-${ticketNumber}`;
+    let channelName = ticketTypeInfo
+      ? `${ticketTypeInfo.slug}-${ticketNumber}`
+      : `ticket-${ticketNumber}`;
     
     if (priority !== 'none') {
       const priorityInfo = PRIORITY_MAP[priority];
@@ -166,6 +199,8 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
       claimedBy: null,
       priority: priority || 'none',
       reason,
+      ticketType: ticketTypeInfo ? ticketType : null,
+      ticketTypeLabel: ticketTypeInfo?.label || null,
     };
     
     await saveTicketData(guild.id, channel.id, ticketData);
@@ -174,7 +209,7 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     
     const embed = createEmbed({
       title: `Ticket #${ticketNumber}`,
-      description: `${member.toString()}, thanks for creating a ticket!\n\n**Reason:** ${reason}\n**Priority:** ${priorityInfo.emoji} ${priorityInfo.label}`,
+      description: `${member.toString()}, thanks for creating a ticket!\n\n${ticketTypeInfo ? `**Category:** ${ticketTypeInfo.emoji} ${ticketTypeInfo.label}\n` : ''}**Reason:** ${reason}\n**Priority:** ${priorityInfo.emoji} ${priorityInfo.label}`,
       color: priorityInfo.color,
       fields: [
         { name: 'Status', value: '🟢 Open', inline: true },
@@ -224,7 +259,9 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
         priority: priority || 'none',
         metadata: {
           channelId: channel.id,
-          categoryName: category?.name || 'Default'
+          categoryName: category?.name || 'Default',
+          ticketType: ticketTypeInfo ? ticketType : null,
+          ticketTypeLabel: ticketTypeInfo?.label || null
         }
       }
     });
